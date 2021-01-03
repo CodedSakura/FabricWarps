@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "fabricwarps",
+  "version": "${version}",
+  "name": "FabricWarps",
+  "description": "FabricWarps is a small, server-side Fabric mod that adds /warp command and its counterparts",
+  "authors": [
+    "CodedSakura"
+  ],
+  "contact": {
+    "website": "http://mods.codedsakura.eu",
+    "homepage": "http://codedsakura.eu",
+    "sources": "https://github.com/CodedSakura/FabricWarps",
+    "repo": "https://github.com/CodedSakura/FabricWarps",
+    "issues": "https://github.com/CodedSakura/FabricWarps/issues"
+  },
+  "license": "ISC",
+  "icon": "assets/FabricWarps/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "eu.codedsakura.fabricwarps.FabricWarps"
+    ],
+    "cardinal-components-world": [
+      "eu.codedsakura.fabricwarps.cca.WarpListComponentInitializer"
+    ]
+  },
+  "custom": {
+    "cardinal-components": ["fabricwarps:warplist"]
+  },
+  "depends": {
+    "fabricloader": ">=0.10.6",
+    "fabric": "*",
+    "minecraft": "^1.16.2"
+  }
+}
