@@ -93,6 +93,7 @@ public class FabricWarps implements ModInitializer {
                 .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Warp with this name not found!")).create());
         if (!WARP_LIST.get(warp.getLeft()).removeWarp(warp.getRight().name))
             throw new SimpleCommandExceptionType(new LiteralText("Failed to remove warp!")).create();
+        ctx.getSource().sendFeedback(new TranslatableText("Warp %s successfully removed!", new LiteralText(name).formatted(Formatting.GOLD)), true);
         return 1;
     }
 
@@ -112,8 +113,11 @@ public class FabricWarps implements ModInitializer {
         if (!name.matches("^[!-~]+$")) throw new SimpleCommandExceptionType(new LiteralText("Invalid warp name!")).create();
         if (getAllWarps(ctx.getSource().getMinecraftServer()).stream().anyMatch(w -> w.getRight().name.equalsIgnoreCase(name)))
             throw new SimpleCommandExceptionType(new LiteralText("Warp with this name already exists!")).create();
-        if (!WARP_LIST.get(dimension).addWarp(new Warp(position, rotation, name, ctx.getSource().getPlayer().getUuid())))
+        Warp newWarp = new Warp(position, rotation, name, ctx.getSource().getPlayer().getUuid());
+        if (!WARP_LIST.get(dimension).addWarp(newWarp))
             throw new SimpleCommandExceptionType(new LiteralText("Failed to add warp!")).create();
+        ctx.getSource().sendFeedback(new TranslatableText("Warp %s successfully added!",
+                new LiteralText(name).styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, newWarp.toText(ctx.getSource().getWorld()))).withColor(Formatting.GOLD))), true);
         return 1;
     }
 
