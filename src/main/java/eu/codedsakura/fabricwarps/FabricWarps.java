@@ -6,15 +6,15 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import eu.codedsakura.mods.ConfigUtils;
 import eu.codedsakura.mods.TeleportUtils;
 import eu.codedsakura.mods.TextUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.fabricmc.loader.FabricLoader;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -27,12 +27,9 @@ import net.minecraft.util.math.Vec3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -45,6 +42,10 @@ import static net.minecraft.server.command.CommandManager.literal;
 
 public class FabricWarps implements ModInitializer {
     public static final Logger logger = LogManager.getLogger("FabricWarps");
+    private static final String CONFIG_NAME = "FabricWarps.properties";
+
+    private final HashMap<UUID, Long> recentRequests = new HashMap<>();
+    private ConfigUtils config;
 
     private List<Pair<ServerWorld, Warp>> getAllWarps(MinecraftServer server) {
         List<Pair<ServerWorld, Warp>> out = new ArrayList<>();
@@ -58,6 +59,15 @@ public class FabricWarps implements ModInitializer {
     @Override
     public void onInitialize() {
         logger.info("Initializing...");
+
+        config = new ConfigUtils(FabricLoader.getInstance().getConfigDir().resolve(CONFIG_NAME).toFile(), logger, Arrays.asList(new ConfigUtils.IConfigValue[] {
+                new ConfigUtils.IntegerConfigValue("stand-still", 5, new ConfigUtils.IntegerConfigValue.IntLimits(0),
+                        new ConfigUtils.Command("Stand-Still time is %s seconds", "Stand-Still time set to %s seconds")),
+                new ConfigUtils.IntegerConfigValue("cooldown", 15, new ConfigUtils.IntegerConfigValue.IntLimits(0),
+                        new ConfigUtils.Command("Cooldown is %s seconds", "Cooldown set to %s seconds")),
+                new ConfigUtils.BooleanConfigValue("bossbar", true,
+                        new ConfigUtils.Command("Boss-Bar on: %s", "Boss-Bar is now: %s"))
+        }));
 
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             dispatcher.register(literal("warp")
@@ -83,7 +93,8 @@ public class FabricWarps implements ModInitializer {
                     .then(literal("remove").requires(source -> source.hasPermissionLevel(2))
                             .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
-                                    .executes(ctx -> warpRemove(ctx, getString(ctx, "name"))))));
+                                    .executes(ctx -> warpRemove(ctx, getString(ctx, "name")))))
+                    .then(config.generateCommand("config", 2)));
         });
     }
 
@@ -145,13 +156,29 @@ public class FabricWarps implements ModInitializer {
         return 1;
     }
 
+    private boolean checkCooldown(ServerPlayerEntity tFrom) {
+        if (recentRequests.containsKey(tFrom.getUuid())) {
+            long diff = Instant.now().getEpochSecond() - recentRequests.get(tFrom.getUuid());
+            if (diff < (int) config.getValue("cooldown")) {
+                tFrom.sendMessage(new TranslatableText("You cannot make a request for %s more seconds!", String.valueOf((int) config.getValue("cooldown") - diff)).formatted(Formatting.RED), false);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private int warpTo(CommandContext<ServerCommandSource> ctx, String name) throws CommandSyntaxException {
         Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getMinecraftServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
                 .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Invalid warp")).create());
+
         ServerPlayerEntity player = ctx.getSource().getPlayer();
-        TeleportUtils.genericTeleport(true, 5, player, () ->
-            player.teleport(warp.getLeft(), warp.getRight().x, warp.getRight().y, warp.getRight().z, warp.getRight().yaw, warp.getRight().pitch));
+        if (checkCooldown(player)) return 1;
+
+        TeleportUtils.genericTeleport((boolean) config.getValue("bossbar"), (int) config.getValue("stand-still"), player, () -> {
+            player.teleport(warp.getLeft(), warp.getRight().x, warp.getRight().y, warp.getRight().z, warp.getRight().yaw, warp.getRight().pitch);
+            recentRequests.put(player.getUuid(), Instant.now().getEpochSecond());
+        });
         return 1;
     }
 
