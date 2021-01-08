@@ -13,6 +13,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.MinecraftServer;
@@ -94,6 +95,10 @@ public class FabricWarps implements ModInitializer {
                             .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                                     .executes(ctx -> warpRemove(ctx, getString(ctx, "name")))))
+                    .then(literal("warp_player").requires(source -> source.hasPermissionLevel(2))
+                            .then(argument("player", EntityArgumentType.player())
+                                    .then(argument("warp_name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
+                                            .executes(ctx -> warpTo(ctx, EntityArgumentType.getPlayer(ctx, "player"), getString(ctx, "warp_name"))))))
                     .then(config.generateCommand("config", 2)));
         });
     }
@@ -168,12 +173,15 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpTo(CommandContext<ServerCommandSource> ctx, String name) throws CommandSyntaxException {
+        ServerPlayerEntity player = ctx.getSource().getPlayer();
+        if (checkCooldown(player)) return 1;
+        return warpTo(ctx, player, name);
+    }
+
+    private int warpTo(CommandContext<ServerCommandSource> ctx, ServerPlayerEntity player, String name) throws CommandSyntaxException {
         Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getMinecraftServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
                 .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Invalid warp")).create());
-
-        ServerPlayerEntity player = ctx.getSource().getPlayer();
-        if (checkCooldown(player)) return 1;
 
         TeleportUtils.genericTeleport((boolean) config.getValue("bossbar"), (int) config.getValue("stand-still"), player, () -> {
             player.teleport(warp.getLeft(), warp.getRight().x, warp.getRight().y, warp.getRight().z, warp.getRight().yaw, warp.getRight().pitch);
