@@ -14,6 +14,7 @@ Requires [FabricAPI](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
 ### OP level 2 permissions
 `/warps add <name> [<x y z> [<yaw pitch> [<dimension>]]]` - creates a new warp destination
 using your coordinates/rotation/dimension if they're not provided  
+`/warps warp_player <player> <name>` - warps a player to the specified warp destination  
 `/warps remove <name>` - removes a warp destination with the name  
 `/warps config [<name> [<value>]]` - sets or gets a config value  
 
