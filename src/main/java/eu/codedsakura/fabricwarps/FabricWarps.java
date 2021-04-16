@@ -12,6 +12,7 @@ import eu.codedsakura.mods.TextUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
@@ -47,6 +48,14 @@ public class FabricWarps implements ModInitializer {
 
     private final HashMap<UUID, Long> recentRequests = new HashMap<>();
     private ConfigUtils config;
+    public static final boolean pre21w08a = determineVersion();
+
+    private static boolean determineVersion() {
+        String version = SharedConstants.getGameVersion().getName();
+        return (version.startsWith("21w0") && !(version.endsWith("8a") || version.endsWith("8b"))) ||
+                (version.startsWith("20w")) ||
+                (version.startsWith("1.16"));
+    }
 
     private List<Pair<ServerWorld, Warp>> getAllWarps(MinecraftServer server) {
         List<Pair<ServerWorld, Warp>> out = new ArrayList<>();
@@ -99,7 +108,7 @@ public class FabricWarps implements ModInitializer {
                             .then(argument("player", EntityArgumentType.player())
                                     .then(argument("warp_name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                                             .executes(ctx -> warpTo(ctx, EntityArgumentType.getPlayer(ctx, "player"), getString(ctx, "warp_name"))))))
-                    .then(config.generateCommand("config", 2)));
+                    .then(config.generateCommand("config", source -> source.hasPermissionLevel(2))));
         });
     }
 
