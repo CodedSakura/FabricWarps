@@ -1,7 +1,8 @@
 # FabricWarps
 [![CurseForge downloads](http://cf.way2muchnoise.eu/short_433362.svg)](https://www.curseforge.com/minecraft/mc-mods/fabricwarps)
-[![GitHub release version](https://img.shields.io/github/v/release/CodedSakura/FabricWarps)](https://github.com/CodedSakura/FabricWarps)  
-A server-side Fabric mod that adds /warp command-set.  
+[![GitHub release version](https://img.shields.io/github/v/release/CodedSakura/FabricWarps)](https://github.com/CodedSakura/FabricWarps)
+[![Discord server](https://img.shields.io/discord/805088174085767219)](https://discord.gg/BkKG6nx6rG)  
+A server-side Fabric/Quilt mod that adds /warp command-set.  
 Works for Minecraft 1.16.2+ (snapshots not fully tested)  
 Requires [FabricAPI](https://www.curseforge.com/minecraft/mc-mods/fabric-api)  
 
