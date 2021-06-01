@@ -20,7 +20,7 @@ public class TeleportUtils {
         final Vec3d[] lastPos = {who.getPos()};
         CommandBossBar standStillBar = null;
         if (bossBar) {
-            standStillBar = server.getBossBarManager().add(new Identifier("standstill"), LiteralText.EMPTY);
+            standStillBar = server.getBossBarManager().add(new Identifier("standstill-" + who.getUuidAsString()), LiteralText.EMPTY);
             standStillBar.addPlayer(who);
             standStillBar.setColor(BossBar.Color.PINK);
         }
