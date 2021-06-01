@@ -16,7 +16,7 @@
   },
   "license": "ISC",
   "icon": "assets/FabricWarps/icon.png",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "eu.codedsakura.fabricwarps.FabricWarps"
