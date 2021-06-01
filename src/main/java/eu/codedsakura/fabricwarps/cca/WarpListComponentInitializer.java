@@ -7,9 +7,9 @@ import dev.onyxstudios.cca.api.v3.world.WorldComponentFactoryRegistry;
 import dev.onyxstudios.cca.api.v3.world.WorldComponentInitializer;
 import eu.codedsakura.fabricwarps.FabricWarps;
 import net.fabricmc.fabric.api.util.NbtType;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
@@ -36,11 +36,11 @@ public class WarpListComponentInitializer implements WorldComponentInitializer {
         private final List<FabricWarps.Warp> warps = new ArrayList<>();
 
         @Override
-        public void readFromNbt(CompoundTag tag) {
+        public void readFromNbt(NbtCompound tag) {
             warps.clear();
-            ListTag warpsTag = tag.getList("warps", NbtType.COMPOUND);
-            for (Tag _warpTag : warpsTag) {
-                CompoundTag warpTag = (CompoundTag) _warpTag;
+            NbtList warpsTag = tag.getList("warps", NbtType.COMPOUND);
+            for (NbtElement _warpTag : warpsTag) {
+                NbtCompound warpTag = (NbtCompound) _warpTag;
                 warps.add(new FabricWarps.Warp(
                         warpTag.getDouble("x"),
                         warpTag.getDouble("y"),
@@ -55,10 +55,10 @@ public class WarpListComponentInitializer implements WorldComponentInitializer {
         }
 
         @Override
-        public void writeToNbt(CompoundTag tag) {
-            ListTag warpsTag = new ListTag();
+        public void writeToNbt(NbtCompound tag) {
+            NbtList warpsTag = new NbtList();
             for (FabricWarps.Warp warp : warps) {
-                CompoundTag warpTag = new CompoundTag();
+                NbtCompound warpTag = new NbtCompound();
                 warpTag.putUuid("id", warp.id);
                 warpTag.putString("name", warp.name);
                 warpTag.putUuid("owner", warp.owner);
