@@ -104,7 +104,7 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpRemove(CommandContext<ServerCommandSource> ctx, String name) throws CommandSyntaxException {
-        Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getMinecraftServer()).stream()
+        Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
                 .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Warp with this name not found!")).create());
         if (!WARP_LIST.get(warp.getLeft()).removeWarp(warp.getRight().name))
@@ -127,7 +127,7 @@ public class FabricWarps implements ModInitializer {
 
     private int warpAdd(CommandContext<ServerCommandSource> ctx, String name, Vec3d position, Vec2f rotation, ServerWorld dimension) throws CommandSyntaxException {
         if (!name.matches("^[!-~]+$")) throw new SimpleCommandExceptionType(new LiteralText("Invalid warp name!")).create();
-        if (getAllWarps(ctx.getSource().getMinecraftServer()).stream().anyMatch(w -> w.getRight().name.equalsIgnoreCase(name)))
+        if (getAllWarps(ctx.getSource().getServer()).stream().anyMatch(w -> w.getRight().name.equalsIgnoreCase(name)))
             throw new SimpleCommandExceptionType(new LiteralText("Warp with this name already exists!")).create();
         Warp newWarp = new Warp(position, rotation, name, ctx.getSource().getPlayer().getUuid());
         if (!WARP_LIST.get(dimension).addWarp(newWarp))
@@ -151,7 +151,7 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpList(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        ctx.getSource().getPlayer().sendMessage(TextUtils.join(StreamSupport.stream(ctx.getSource().getMinecraftServer().getWorlds().spliterator(), false)
+        ctx.getSource().getPlayer().sendMessage(TextUtils.join(StreamSupport.stream(ctx.getSource().getServer().getWorlds().spliterator(), false)
                 .map(this::warpListForDimension).collect(Collectors.toList()), new LiteralText("\n")), false);//.reduce(LiteralText.EMPTY.copy(), (buff, elem) -> buff.append(elem).append("\n")), false);
         return 1;
     }
@@ -179,7 +179,7 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpTo(CommandContext<ServerCommandSource> ctx, ServerPlayerEntity player, String name) throws CommandSyntaxException {
-        Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getMinecraftServer()).stream()
+        Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
                 .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Invalid warp")).create());
 
@@ -192,7 +192,7 @@ public class FabricWarps implements ModInitializer {
 
     private CompletableFuture<Suggestions> getWarpSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {
         String start = builder.getRemaining().toLowerCase();
-        getAllWarps(context.getSource().getMinecraftServer()).stream()
+        getAllWarps(context.getSource().getServer()).stream()
                 .map(v -> v.getRight().name)
                 .sorted(String::compareToIgnoreCase)
                 .filter(pair -> pair.toLowerCase().startsWith(start))
