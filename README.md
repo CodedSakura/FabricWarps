@@ -6,18 +6,34 @@ A server-side Fabric/Quilt mod that adds /warp command-set.
 Works for Minecraft 1.16.2+ (snapshots not fully tested)  
 Requires [FabricAPI](https://www.curseforge.com/minecraft/mc-mods/fabric-api)  
 
-## Commands
-`/warp <destination>` - Teleports you to the destination
+## Commands & Permissions
+- `/warp <destination>` - Teleports you to the destination  
+Permission: `fabricwarps.warp` | Default: `True`  
 
-`/warps` - Alias for `/warps list`  
-`/warps list [<dimension>]` - Lists all warps for the specified dimension or all dimensions
 
-### OP level 2 permissions
-`/warps add <name> [<x y z> [<yaw pitch> [<dimension>]]]` - creates a new warp destination
+- `/warps` - Alias for `/warps list`  
+`/warps list [<dimension>]` - Lists all warps for the specified dimension or all dimensions  
+Permission: `fabricwarps.warps.list` | Default: `True`
+
+
+- `/warps add <name> [<x y z> [<yaw pitch> [<dimension>]]]` - creates a new warp destination
 using your coordinates/rotation/dimension if they're not provided  
-`/warps warp_player <player> <name>` - warps a player to the specified warp destination  
-`/warps remove <name>` - removes a warp destination with the name  
-`/warps config [<name> [<value>]]` - sets or gets a config value  
+Permission: `fabricwarps.warps.add` | Default: `Level 2`  
+
+
+- `/warps warp_player <player> <name>` - warps a player to the specified warp destination  
+Permission: `fabricwarps.warps.warp_player` | Default: `Level 2`
+
+
+- `/warps remove <name>` - removes a warp destination with the name  
+Permission: `fabricwarps.warps.remove` | Default: `Level 2`
+
+
+- `/warps config [<name> [<value>]]` - sets or gets a config value  
+Permission: `fabricwarps.config` | Default: `Level 2`
+
+
+Permission `fabricwarps.warps` will grant permission to all `/warps` subcommands.
 
 ## Configuration
 
