@@ -78,7 +78,7 @@ public class FabricWarps implements ModInitializer {
                             .executes(ctx -> warpTo(ctx, getString(ctx, "name")))));
 
             dispatcher.register(literal("warps")
-                            .executes(this::warpList)
+                    .executes(this::warpList)
                     .then(literal("list")
                             .requires(Permissions.require("fabricwarps.warps.list", true))
                             .executes(this::warpList)
