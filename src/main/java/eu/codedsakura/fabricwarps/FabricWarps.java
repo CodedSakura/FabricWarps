@@ -9,7 +9,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import eu.codedsakura.mods.ConfigUtils;
 import eu.codedsakura.mods.TeleportUtils;
 import eu.codedsakura.mods.TextUtils;
-import me.lucko.fabric.api.permissions.v0.Permissions;
+import eu.codedsakura.mods.fpapiutils.FPAPIUtilsWrapper;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -73,19 +73,19 @@ public class FabricWarps implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             dispatcher.register(literal("warp")
-                    .requires(Permissions.require("fabricwarps.warp", true))
+                    .requires(FPAPIUtilsWrapper.require("fabricwarps.warp", true))
                     .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                             .executes(ctx -> warpTo(ctx, getString(ctx, "name")))));
 
             dispatcher.register(literal("warps")
                     .executes(this::warpList)
                     .then(literal("list")
-                            .requires(Permissions.require("fabricwarps.warps.list", true))
+                            .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.list", true))
                             .executes(this::warpList)
                             .then(argument("dimension", DimensionArgumentType.dimension())
                                     .executes(ctx -> warpList(ctx, DimensionArgumentType.getDimensionArgument(ctx, "dimension")))))
                     .then(literal("add")
-                            .requires(Permissions.require("fabricwarps.warps.add", 2))
+                            .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.add", 2))
                             .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string())
                                     .executes(ctx -> warpAdd(ctx, getString(ctx, "name")))
@@ -96,16 +96,16 @@ public class FabricWarps implements ModInitializer {
                                                     .then(argument("dimension", DimensionArgumentType.dimension())
                                                             .executes(ctx -> warpAdd(ctx, getString(ctx, "name"), getPosArgument(ctx, "position").toAbsolutePos(ctx.getSource()), getRotation(ctx, "rotation").toAbsoluteRotation(ctx.getSource()), DimensionArgumentType.getDimensionArgument(ctx, "dimension"))))))))
                     .then(literal("remove")
-                            .requires(Permissions.require("fabricwarps.warps.remove", 2))
+                            .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.remove", 2))
                             .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                                     .executes(ctx -> warpRemove(ctx, getString(ctx, "name")))))
                     .then(literal("warp_player")
-                            .requires(Permissions.require("fabricwarps.warps.warp_player", 2))
+                            .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.warp_player", 2))
                             .then(argument("player", EntityArgumentType.player())
                                     .then(argument("warp_name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                                             .executes(ctx -> warpTo(ctx, EntityArgumentType.getPlayer(ctx, "player"), getString(ctx, "warp_name"))))))
-                    .then(config.generateCommand("config", Permissions.require("fabricwarps.config", 2))));
+                    .then(config.generateCommand("config", FPAPIUtilsWrapper.require("fabricwarps.config", 2))));
         });
     }
 
@@ -157,7 +157,7 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpList(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
-        if(!Permissions.check(ctx.getSource(), "fabricwarps.warps.list", true)) {
+        if(!FPAPIUtilsWrapper.check(ctx.getSource(), "fabricwarps.warps.list", true)) {
             return 0;
         }
         ctx.getSource().getPlayer().sendMessage(TextUtils.join(StreamSupport.stream(ctx.getSource().getServer().getWorlds().spliterator(), false)
