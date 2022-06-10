@@ -11,7 +11,7 @@ import eu.codedsakura.mods.TeleportUtils;
 import eu.codedsakura.mods.TextUtils;
 import eu.codedsakura.mods.fpapiutils.FPAPIUtilsWrapper;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -71,7 +71,7 @@ public class FabricWarps implements ModInitializer {
                         new ConfigUtils.Command("Boss-Bar on: %s", "Boss-Bar is now: %s"))
         }));
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> {
             dispatcher.register(literal("warp")
                     .requires(FPAPIUtilsWrapper.require("fabricwarps.warp", true))
                     .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
@@ -86,7 +86,7 @@ public class FabricWarps implements ModInitializer {
                                     .executes(ctx -> warpList(ctx, DimensionArgumentType.getDimensionArgument(ctx, "dimension")))))
                     .then(literal("add")
                             .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.add", 2))
-                            .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
+                            .executes(ctx -> {throw new SimpleCommandExceptionType(Text.literal("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string())
                                     .executes(ctx -> warpAdd(ctx, getString(ctx, "name")))
                                     .then(argument("position", Vec3ArgumentType.vec3(true))
@@ -97,7 +97,7 @@ public class FabricWarps implements ModInitializer {
                                                             .executes(ctx -> warpAdd(ctx, getString(ctx, "name"), getPosArgument(ctx, "position").toAbsolutePos(ctx.getSource()), getRotation(ctx, "rotation").toAbsoluteRotation(ctx.getSource()), DimensionArgumentType.getDimensionArgument(ctx, "dimension"))))))))
                     .then(literal("remove")
                             .requires(FPAPIUtilsWrapper.require("fabricwarps.warps.remove", 2))
-                            .executes(ctx -> {throw new SimpleCommandExceptionType(new LiteralText("Provide a warp name!")).create();})
+                            .executes(ctx -> {throw new SimpleCommandExceptionType(Text.literal("Provide a warp name!")).create();})
                             .then(argument("name", StringArgumentType.string()).suggests(this::getWarpSuggestions)
                                     .executes(ctx -> warpRemove(ctx, getString(ctx, "name")))))
                     .then(literal("warp_player")
@@ -112,10 +112,10 @@ public class FabricWarps implements ModInitializer {
     private int warpRemove(CommandContext<ServerCommandSource> ctx, String name) throws CommandSyntaxException {
         Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
-                .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Warp with this name not found!")).create());
+                .orElseThrow(() -> new SimpleCommandExceptionType(Text.literal("Warp with this name not found!")).create());
         if (!WARP_LIST.get(warp.getLeft()).removeWarp(warp.getRight().name))
-            throw new SimpleCommandExceptionType(new LiteralText("Failed to remove warp!")).create();
-        ctx.getSource().sendFeedback(new TranslatableText("Warp %s successfully removed!", new LiteralText(name).formatted(Formatting.GOLD)), true);
+            throw new SimpleCommandExceptionType(Text.literal("Failed to remove warp!")).create();
+        ctx.getSource().sendFeedback(Text.translatable("Warp %s successfully removed!", Text.literal(name).formatted(Formatting.GOLD)), true);
         return 1;
     }
 
@@ -132,26 +132,26 @@ public class FabricWarps implements ModInitializer {
     }
 
     private int warpAdd(CommandContext<ServerCommandSource> ctx, String name, Vec3d position, Vec2f rotation, ServerWorld dimension) throws CommandSyntaxException {
-        if (!name.matches("^[!-~]+$")) throw new SimpleCommandExceptionType(new LiteralText("Invalid warp name!")).create();
+        if (!name.matches("^[!-~]+$")) throw new SimpleCommandExceptionType(Text.literal("Invalid warp name!")).create();
         if (getAllWarps(ctx.getSource().getServer()).stream().anyMatch(w -> w.getRight().name.equalsIgnoreCase(name)))
-            throw new SimpleCommandExceptionType(new LiteralText("Warp with this name already exists!")).create();
+            throw new SimpleCommandExceptionType(Text.literal("Warp with this name already exists!")).create();
         Warp newWarp = new Warp(position, rotation, name, ctx.getSource().getPlayer().getUuid());
         if (!WARP_LIST.get(dimension).addWarp(newWarp))
-            throw new SimpleCommandExceptionType(new LiteralText("Failed to add warp!")).create();
-        ctx.getSource().sendFeedback(new TranslatableText("Warp %s successfully added!",
-                new LiteralText(name).styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, newWarp.toText(ctx.getSource().getWorld()))).withColor(Formatting.GOLD))), true);
+            throw new SimpleCommandExceptionType(Text.literal("Failed to add warp!")).create();
+        ctx.getSource().sendFeedback(Text.translatable("Warp %s successfully added!",
+                Text.literal(name).styled(s -> s.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, newWarp.toText(ctx.getSource().getWorld()))).withColor(Formatting.GOLD))), true);
         return 1;
     }
 
     private MutableText warpListForDimension(ServerWorld dimension) {
         List<Warp> warps = WARP_LIST.get(dimension).getWarps();
-        MutableText list = new LiteralText("In ").formatted(Formatting.LIGHT_PURPLE)
-                .append(new LiteralText(dimension.getRegistryKey().getValue().toString()).formatted(Formatting.AQUA))
-                .append(new LiteralText(":").formatted(Formatting.LIGHT_PURPLE));
+        MutableText list = Text.literal("In ").formatted(Formatting.LIGHT_PURPLE)
+                .append(Text.literal(dimension.getRegistryKey().getValue().toString()).formatted(Formatting.AQUA))
+                .append(Text.literal(":").formatted(Formatting.LIGHT_PURPLE));
         warps.stream().sorted((o1, o2) -> o1.name.compareToIgnoreCase(o2.name)).forEach((v) ->
-                list.append(new LiteralText("\n  ").append(new LiteralText(v.name).styled(s ->
+                list.append(Text.literal("\n  ").append(Text.literal(v.name).styled(s ->
                         s.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/warp \"" + v.name + "\""))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, LiteralText.EMPTY.copy().append(new LiteralText("Click to teleport.\n").formatted(Formatting.ITALIC)).append(v.toText(dimension))))
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.empty().append(Text.literal("Click to teleport.\n").formatted(Formatting.ITALIC)).append(v.toText(dimension))))
                                 .withColor(Formatting.GOLD)))));
         return list;
     }
@@ -161,7 +161,7 @@ public class FabricWarps implements ModInitializer {
             return 0;
         }
         ctx.getSource().getPlayer().sendMessage(TextUtils.join(StreamSupport.stream(ctx.getSource().getServer().getWorlds().spliterator(), false)
-                .map(this::warpListForDimension).collect(Collectors.toList()), new LiteralText("\n")), false);//.reduce(LiteralText.EMPTY.copy(), (buff, elem) -> buff.append(elem).append("\n")), false);
+                .map(this::warpListForDimension).collect(Collectors.toList()), Text.literal("\n")), false);//.reduce(LiteralText.EMPTY.copy(), (buff, elem) -> buff.append(elem).append("\n")), false);
         return 1;
     }
 
@@ -174,7 +174,7 @@ public class FabricWarps implements ModInitializer {
         if (recentRequests.containsKey(tFrom.getUuid())) {
             long diff = Instant.now().getEpochSecond() - recentRequests.get(tFrom.getUuid());
             if (diff < (int) config.getValue("cooldown")) {
-                tFrom.sendMessage(new TranslatableText("You cannot make a request for %s more seconds!", String.valueOf((int) config.getValue("cooldown") - diff)).formatted(Formatting.RED), false);
+                tFrom.sendMessage(Text.translatable("You cannot make a request for %s more seconds!", String.valueOf((int) config.getValue("cooldown") - diff)).formatted(Formatting.RED), false);
                 return true;
             }
         }
@@ -190,7 +190,7 @@ public class FabricWarps implements ModInitializer {
     private int warpTo(CommandContext<ServerCommandSource> ctx, ServerPlayerEntity player, String name) throws CommandSyntaxException {
         Pair<ServerWorld, Warp> warp = getAllWarps(ctx.getSource().getServer()).stream()
                 .filter(v -> v.getRight().name.equals(name)).findFirst()
-                .orElseThrow(() -> new SimpleCommandExceptionType(new LiteralText("Invalid warp")).create());
+                .orElseThrow(() -> new SimpleCommandExceptionType(Text.literal("Invalid warp")).create());
 
         TeleportUtils.genericTeleport((boolean) config.getValue("bossbar"), (int) config.getValue("stand-still"), player, () -> {
             player.teleport(warp.getLeft(), warp.getRight().x, warp.getRight().y, warp.getRight().z, warp.getRight().yaw, warp.getRight().pitch);
@@ -236,11 +236,11 @@ public class FabricWarps implements ModInitializer {
 
         private static MutableText valueRepr(String name, Text value) {
             if (value.getStyle().getColor() == null)
-                return new LiteralText(name + ": ").formatted(Formatting.RESET).append(value.copy().formatted(Formatting.GOLD));
-            return new LiteralText(name + ": ").formatted(Formatting.RESET).append(value);
+                return Text.literal(name + ": ").formatted(Formatting.RESET).append(value.copy().formatted(Formatting.GOLD));
+            return Text.literal(name + ": ").formatted(Formatting.RESET).append(value);
         }
         private static MutableText valueRepr(String name, String value) {
-            return valueRepr(name, new LiteralText(value).formatted(Formatting.GOLD));
+            return valueRepr(name, Text.literal(value).formatted(Formatting.GOLD));
         }
         private static MutableText valueRepr(String name, double value) {
             return valueRepr(name, String.format("%.2f", value));
@@ -251,8 +251,8 @@ public class FabricWarps implements ModInitializer {
 
         public MutableText toText(ServerWorld world) {
             ServerPlayerEntity player = world.getServer().getPlayerManager().getPlayer(this.owner);
-            Text ownerName = player == null ? new LiteralText("[unknown]") : player.getDisplayName();
-            return new TranslatableText("%s\n%s\n%s; %s; %s\n%s; %s\n%s\n%s",
+            Text ownerName = player == null ? Text.literal("[unknown]") : player.getDisplayName();
+            return Text.translatable("%s\n%s\n%s; %s; %s\n%s; %s\n%s\n%s",
                     valueRepr("Name", name), valueRepr("Made by", ownerName),
                     valueRepr("X", x), valueRepr("Y", y), valueRepr("Z", z),
                     valueRepr("Yaw", yaw), valueRepr("Pitch", pitch),
